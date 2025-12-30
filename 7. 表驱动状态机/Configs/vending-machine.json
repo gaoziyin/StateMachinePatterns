@@ -1,0 +1,139 @@
+{
+  "id": "vending-machine",
+  "name": "自动售货机",
+  "version": "1.0",
+  "initialState": "idle",
+  "context": {
+    "balance": 0,
+    "selectedItem": "",
+    "itemPrice": 0,
+    "dispensedItem": ""
+  },
+  "states": {
+    "idle": {
+      "name": "空闲",
+      "description": "等待投币",
+      "type": "initial",
+      "onEntry": [
+        { "type": "log", "params": { "message": "💰 欢迎使用自动售货机，请投币" } },
+        { "type": "assign", "params": { "balance": 0, "selectedItem": "" } }
+      ],
+      "on": {
+        "INSERT_COIN": {
+          "target": "hasCredit",
+          "actions": [
+            { "type": "log", "params": { "message": "硬币已投入" } }
+          ]
+        },
+        "MAINTENANCE": {
+          "target": "maintenance"
+        }
+      }
+    },
+    "hasCredit": {
+      "name": "有余额",
+      "description": "已投币，等待选择商品",
+      "onEntry": [
+        { "type": "log", "params": { "message": "💵 当前余额: ${balance} 元，请选择商品" } }
+      ],
+      "on": {
+        "INSERT_COIN": {
+          "target": "hasCredit",
+          "actions": [
+            { "type": "log", "params": { "message": "追加投币" } }
+          ]
+        },
+        "SELECT_ITEM": {
+          "target": "itemSelected",
+          "actions": [
+            { "type": "log", "params": { "message": "选择商品: ${selectedItem}" } }
+          ]
+        },
+        "REFUND": {
+          "target": "idle",
+          "actions": [
+            { "type": "log", "params": { "message": "退还 ${balance} 元" } }
+          ]
+        }
+      }
+    },
+    "itemSelected": {
+      "name": "已选商品",
+      "description": "检查余额是否足够",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🛒 已选择: ${selectedItem}，价格: ${itemPrice} 元" } }
+      ],
+      "on": {
+        "CONFIRM": {
+          "target": "dispensing",
+          "guard": "balance > itemPrice",
+          "actions": [
+            { "type": "log", "params": { "message": "余额充足，开始出货" } }
+          ]
+        },
+        "CONFIRM": {
+          "target": "hasCredit",
+          "actions": [
+            { "type": "log", "params": { "message": "❌ 余额不足，请继续投币" } }
+          ]
+        },
+        "CANCEL": {
+          "target": "hasCredit",
+          "actions": [
+            { "type": "assign", "params": { "selectedItem": "" } }
+          ]
+        }
+      }
+    },
+    "dispensing": {
+      "name": "出货中",
+      "description": "正在出货",
+      "onEntry": [
+        { "type": "log", "params": { "message": "📦 正在出货..." } },
+        { "type": "delay", "params": { "ms": 500 } }
+      ],
+      "on": {
+        "DISPENSE_COMPLETE": {
+          "target": "givingChange",
+          "actions": [
+            { "type": "log", "params": { "message": "✅ 商品已送出: ${selectedItem}" } }
+          ]
+        },
+        "DISPENSE_FAILED": {
+          "target": "hasCredit",
+          "actions": [
+            { "type": "log", "params": { "message": "❌ 出货失败，请重新选择" } }
+          ]
+        }
+      }
+    },
+    "givingChange": {
+      "name": "找零",
+      "description": "返还找零",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🪙 找零中..." } }
+      ],
+      "on": {
+        "CHANGE_GIVEN": {
+          "target": "idle",
+          "actions": [
+            { "type": "log", "params": { "message": "感谢惠顾！找零已退还" } }
+          ]
+        }
+      }
+    },
+    "maintenance": {
+      "name": "维护模式",
+      "description": "机器维护中",
+      "type": "normal",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🔧 维护模式，暂停服务" } }
+      ],
+      "on": {
+        "EXIT_MAINTENANCE": {
+          "target": "idle"
+        }
+      }
+    }
+  }
+}

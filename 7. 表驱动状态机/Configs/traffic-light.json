@@ -1,0 +1,85 @@
+{
+  "id": "traffic-light",
+  "name": "交通灯状态机",
+  "version": "1.0",
+  "initialState": "red",
+  "context": {
+    "cycleCount": 0,
+    "isEmergency": false
+  },
+  "states": {
+    "red": {
+      "name": "红灯",
+      "description": "停止通行",
+      "type": "normal",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🔴 红灯亮起 - 请停车等待" } },
+        { "type": "increment", "params": { "key": "cycleCount", "amount": 1 } }
+      ],
+      "on": {
+        "TIMER": {
+          "target": "green",
+          "guard": "!isEmergency",
+          "actions": [
+            { "type": "log", "params": { "message": "计时结束，准备切换到绿灯" } }
+          ]
+        },
+        "EMERGENCY": {
+          "target": "red",
+          "actions": [
+            { "type": "assign", "params": { "isEmergency": true } },
+            { "type": "log", "params": { "message": "⚠️ 紧急模式：保持红灯" } }
+          ]
+        },
+        "RESET": {
+          "target": "red",
+          "actions": [
+            { "type": "assign", "params": { "isEmergency": false, "cycleCount": 0 } }
+          ]
+        }
+      }
+    },
+    "green": {
+      "name": "绿灯",
+      "description": "允许通行",
+      "type": "normal",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🟢 绿灯亮起 - 请通行" } }
+      ],
+      "on": {
+        "TIMER": {
+          "target": "yellow",
+          "actions": [
+            { "type": "log", "params": { "message": "计时结束，准备切换到黄灯" } }
+          ]
+        },
+        "EMERGENCY": {
+          "target": "red",
+          "actions": [
+            { "type": "assign", "params": { "isEmergency": true } }
+          ]
+        }
+      }
+    },
+    "yellow": {
+      "name": "黄灯",
+      "description": "准备停止",
+      "type": "normal",
+      "onEntry": [
+        { "type": "log", "params": { "message": "🟡 黄灯亮起 - 准备停车" } },
+        { "type": "delay", "params": { "ms": 100 } }
+      ],
+      "on": {
+        "TIMER": {
+          "target": "red"
+        },
+        "EMERGENCY": {
+          "target": "red",
+          "actions": [
+            { "type": "assign", "params": { "isEmergency": true } }
+          ]
+        }
+      }
+    }
+  }
+}
