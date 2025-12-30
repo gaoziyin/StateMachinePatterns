@@ -41,7 +41,7 @@ public class VendingMachineExample
 
 public class VendingMachine
 {
-    internal readonly HierarchicalStateMachine _stateMachine = new();
+    private readonly HierarchicalStateMachine _stateMachine = new();
     
     public void Initialize()
     {
@@ -56,6 +56,12 @@ public class VendingMachine
     public string GetCurrentState()
     {
         return _stateMachine.GetCurrentStatePath();
+    }
+    
+    // Internal method for states to transition
+    internal void TransitionTo(HierarchicalState newState)
+    {
+        _stateMachine.TransitionTo(newState);
     }
     
     // State classes
@@ -80,7 +86,7 @@ public class VendingMachine
             if (eventName == "InsertMoney")
             {
                 Console.WriteLine("Money inserted!");
-                _machine._stateMachine.TransitionTo(new HasMoneyState(_machine));
+                _machine.TransitionTo(new HasMoneyState(_machine));
                 return true;
             }
             else if (eventName == "Dispense")
@@ -115,7 +121,7 @@ public class VendingMachine
             if (eventName == "Cancel")
             {
                 Console.WriteLine("Transaction cancelled - returning money");
-                _machine._stateMachine.TransitionTo(new IdleState(_machine));
+                _machine.TransitionTo(new IdleState(_machine));
                 return true;
             }
             
@@ -173,8 +179,7 @@ public class VendingMachine
             if (eventName == "Dispense")
             {
                 Console.WriteLine("Dispensing product... Enjoy!");
-                // Transition back to Idle through the machine
-                _machine._stateMachine.TransitionTo(new IdleState(_machine));
+                _machine.TransitionTo(new IdleState(_machine));
                 return true;
             }
             
